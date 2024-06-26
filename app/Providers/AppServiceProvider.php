@@ -2,49 +2,61 @@
 
 namespace App\Providers;
 
-use App\Models\Integration;
-use App\Models\Client;
-use App\Models\Invoice;
-use App\Models\Task;
-use App\Models\Lead;
-use App\Models\Project;
-use App\Observers\ClientObserver;
-use App\Observers\TaskObserver;
-use App\Observers\LeadObserver;
-use App\Observers\ProjectObserver;
-use App\Observers\InvoiceObserver;
-use App\Repositories\Format\GetDateFormat;
+use App\Models\Company;
+use Barryvdh\LaravelIdeHelper\IdeHelperServiceProvider;
+use Carbon\CarbonInterval;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
-use Laravel\Dusk\DuskServiceProvider;
 use Laravel\Cashier\Cashier;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap any application services.
-     *
-     * @return void
-     */
-    public function boot()
-    {
-        Cashier::ignoreMigrations();
-        Client::observe(ClientObserver::class);
-        Task::observe(TaskObserver::class);
-        Lead::observe(LeadObserver::class);
-        Project::observe(ProjectObserver::class);
-        Invoice::observe(InvoiceObserver::class);
-    }
 
     /**
      * Register any application services.
      *
      * @return void
      */
+
     public function register()
     {
-        if ($this->app->environment('local', 'testing')) {
-            $this->app->register(DuskServiceProvider::class);
+        Cashier::ignoreMigrations();
+        Sanctum::ignoreMigrations();
+
+        if (config('app.redirect_https')) {
+            $this->app['request']->server->set('HTTPS', true);
         }
-        $this->app->singleton(GetDateFormat::class);
     }
+
+    public function boot()
+    {
+        Cashier::useCustomerModel(Company::class);
+
+        if (config('app.redirect_https')) {
+            \URL::forceScheme('https');
+        }
+
+        Schema::defaultStringLength(191);
+
+        if (app()->environment('development')) {
+            $this->app->register(IdeHelperServiceProvider::class);
+        }
+
+        CarbonInterval::macro('formatHuman', function ($totalMinutes, $seconds = false): string {
+
+            if ($seconds) {
+                return static::seconds($totalMinutes)->cascade()->forHumans(['short' => true, 'options' => 0]);
+                /** @phpstan-ignore-line */
+            }
+
+            return static::minutes($totalMinutes)->cascade()->forHumans(['short' => true, 'options' => 0]);
+            /** @phpstan-ignore-line */
+        });
+
+//        Model::preventLazyLoading(app()->environment('development'));
+
+    }
+
 }

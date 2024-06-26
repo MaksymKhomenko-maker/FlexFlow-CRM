@@ -1,22 +1,36 @@
 <?php
 
-/** @var \Illuminate\Database\Eloquent\Factory $factory */
+namespace Database\Factories;
 
-use App\Models\Lead;
-use App\Models\User;
-use Faker\Generator as Faker;
+use App\Models\Deal;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
-$factory->define(Lead::class, function (Faker $faker) {
-    return [
-        'title' => $faker->sentence,
-        'external_id' => $faker->uuid,
-        'description' => $faker->paragraph,
-        'user_created_id' => factory(User::class),
-        'user_assigned_id' => factory(User::class),
-        'client_id' => factory(\App\Models\Client::class),
-        'status_id' => $faker->numberBetween($min = 5, $max = 8),
-        'deadline' => $faker->dateTimeThisYear($max = 'now'),
-        'created_at' => $faker->dateTimeThisYear($max = 'now'),
-        'updated_at' => $faker->dateTimeThisYear($max = 'now'),
-    ];
-});
+class LeadFactory extends Factory
+{
+    /**
+     * The name of the factory's corresponding model.
+     *
+     * @var string
+     */
+    protected $model = Deal::class;
+
+    /**
+     * Define the model's default state.
+     *
+     * @return array
+     */
+    public function definition()
+    {
+        return [
+            'company_name' => fake()->company,
+            'address' => fake()->address,
+            'client_name' => fake()->name,
+            'client_email' => fake()->email,
+            'mobile' => fake()->randomNumber(8),
+            'value' => fake()->randomNumber(6),
+            'note' => fake()->text(),
+            'next_follow_up' => 'yes',
+        ];
+    }
+
+}

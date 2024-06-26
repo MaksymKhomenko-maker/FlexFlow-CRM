@@ -1,7 +1,59 @@
 <?php
 
+use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\ServiceProvider;
+
 return [
 
+    /*
+    |--------------------------------------------------------------------------
+    | Application Name
+    |--------------------------------------------------------------------------
+    |
+    | This value is the name of your application. This value is used when the
+    | framework needs to place the application's name in a notification or
+    | any other location as required by the application or its packages.
+    |
+    */
+
+    // This will determine if the application worksuite or worksuite-saas
+    'app_name' => 'worksuite-saas',
+
+    'name' => 'Worksuite Saas',
+
+
+    // We will use this for email copyright message
+    'global_app_name' => 'Worksuite Saas',
+    /*
+    |--------------------------------------------------------------------------
+    | Application Name
+    |--------------------------------------------------------------------------
+    |
+    | This value is the name of your application. This value is used when the
+    | framework needs to place the application's name in a notification or
+    | any other location as required by the application or its packages.
+    |
+    */
+
+    'app_configuration_mode' => env('APP_CONFIGURATION_MODE', 'browser'),
+
+    'non_saas_to_saas_enabled' => env('NON_SAAS_TO_SAAS_ENABLED', false),
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Seeding
+    |--------------------------------------------------------------------------
+    | This tells if the data is seeding  (php artisan db:seed)
+    |
+    */
+
+    'seeding' => false,
+    'redirect_https' => env('REDIRECT_HTTPS', false),
+    'seed_record_count' => env('SEED_RECORD_COUNT', 5),
+    'extra_company_seed_count' => env('EXTRA_COMPANY_SEED_COUNT', 0),
+    'main_application_subdomain' => env('MAIN_APPLICATION_SUBDOMAIN'),
+    'short_domain_name' => env('SHORT_DOMAIN_NAME', false),
     /*
     |--------------------------------------------------------------------------
     | Application Environment
@@ -9,11 +61,13 @@ return [
     |
     | This value determines the "environment" your application is currently
     | running in. This may determine how you prefer to configure various
-    | services your application utilizes. Set this in your ".env" file.
+    | services the application utilizes. Set this in your ".env" file.
     |
     */
 
     'env' => env('APP_ENV', 'production'),
+
+    'currency_converter_key' => env('CURRENCY_CONVERTER_KEY'),
 
     /*
     |--------------------------------------------------------------------------
@@ -26,7 +80,19 @@ return [
     |
     */
 
-    'debug' => env('APP_DEBUG', false),
+    'debug' => (bool)env('APP_DEBUG', false),
+
+    /*
+        |--------------------------------------------------------------------------
+        | API Debug Mode
+        |--------------------------------------------------------------------------
+        |
+        | When your application is in debug mode, detailed error messages with
+        | stack traces will be shown on every error that occurs within your
+        | application. If disabled, a simple generic error page is shown.
+        |
+        */
+    'api_debug' => env('APP_API_DEBUG', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -40,6 +106,9 @@ return [
     */
 
     'url' => env('APP_URL', 'http://localhost'),
+    'main_app_url' => env('APP_URL', 'http://localhost'),
+
+    'asset_url' => env('ASSET_URL', null),
 
     /*
     |--------------------------------------------------------------------------
@@ -52,7 +121,8 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('DB_TIMEZONE', 'UTC'),
+    'cron_timezone' => env('CRON_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------
@@ -65,7 +135,7 @@ return [
     |
     */
 
-    'locale' => 'dk',
+    'locale' => env('APP_LOCALE', 'en'),
 
     /*
     |--------------------------------------------------------------------------
@@ -78,7 +148,20 @@ return [
     |
     */
 
-    'fallback_locale' => 'en',
+    'fallback_locale' => 'eng',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Faker Locale
+    |--------------------------------------------------------------------------
+    |
+    | This locale will be used by the Faker PHP library when generating fake
+    | data for your database seeds. For example, this will be used to get
+    | localized telephone numbers, street address information and more.
+    |
+    */
+
+    'faker_locale' => 'en_US',
 
     /*
     |--------------------------------------------------------------------------
@@ -91,9 +174,37 @@ return [
     |
     */
 
+
     'key' => env('APP_KEY'),
 
     'cipher' => 'AES-256-CBC',
+    /*
+    |--------------------------------------------------------------------------
+    | Maintenance Mode Driver
+    |--------------------------------------------------------------------------
+    |
+    | These configuration options determine the driver used to determine and
+    | manage Laravel's "maintenance mode" status. The "cache" driver will
+    | allow maintenance mode to be controlled across multiple machines.
+    |
+    | Supported drivers: "file", "cache"
+    |
+    */
+
+    'maintenance' => [
+        'driver' => 'file',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Autoloaded Service Providers
+    |--------------------------------------------------------------------------
+    |
+    | The service providers listed here will be automatically loaded on the
+    | request to your application. Feel free to add your own services to
+    | this array to grant expanded functionality to your applications.
+    |
+    */
 
 
     'providers' => [
@@ -112,7 +223,8 @@ return [
         Illuminate\Filesystem\FilesystemServiceProvider::class,
         Illuminate\Foundation\Providers\FoundationServiceProvider::class,
         Illuminate\Hashing\HashServiceProvider::class,
-        Illuminate\Mail\MailServiceProvider::class,
+        \App\Providers\SessionDriverConfigProvider::class,
+        Illuminate\Notifications\NotificationServiceProvider::class,
         Illuminate\Pagination\PaginationServiceProvider::class,
         Illuminate\Pipeline\PipelineServiceProvider::class,
         Illuminate\Queue\QueueServiceProvider::class,
@@ -122,21 +234,31 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
-        Illuminate\Notifications\NotificationServiceProvider::class,
-        Collective\Html\HtmlServiceProvider::class,
-        Yajra\Datatables\DatatablesServiceProvider::class,
-        Laravel\Tinker\TinkerServiceProvider::class,
-        App\Zizaco\Entrust\EntrustServiceProvider::class,
-        Laravel\Cashier\CashierServiceProvider::class,
+        \App\Providers\TranslateSettingConfigProvider::class,
+        \Illuminate\Mail\MailServiceProvider::class,
+        \App\Providers\FileStorageCustomConfigProvider::class,
+        \App\Providers\SmtpConfigProvider::class,
+
+        /*
+         * Package Service Providers...
+         */
+
         /*
          * Application Service Providers...
          */
         App\Providers\AppServiceProvider::class,
         App\Providers\AuthServiceProvider::class,
+        App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-        App\Providers\BroadcastServiceProvider::class,
-        App\Providers\ViewComposerServiceProvider::class,
+        Froiden\RestAPI\Providers\ApiServiceProvider::class,
+        App\Providers\FortifyServiceProvider::class,
+        Barryvdh\TranslationManager\ManagerServiceProvider::class,
+        Macellan\Zip\ZipServiceProvider::class,
+        Froiden\LaravelInstaller\Providers\LaravelInstallerServiceProvider::class,
+
+        // WORKSUITESAAS
+        App\Providers\SuperAdmin\EventServiceProvider::class,
     ],
 
     /*
@@ -146,51 +268,45 @@ return [
     |
     | This array of class aliases will be registered when this application
     | is started. However, feel free to register as many as you wish as
-    | the aliases are "lazy" loaded so they don't hinder performance.
+    | the aliases are "lazy" loaded, so they don't hinder performance.
     |
     */
 
-    'aliases' => [
+    'aliases' => Facade::defaultAliases()->merge([
+        'ApiRoute' => Froiden\RestAPI\Facades\ApiRoute::class,
+        'DataTables' => Yajra\DataTables\Facades\DataTables::class,
+        'Zip' => Macellan\Zip\ZipFacade::class,
+    ])->toArray(),
 
-        'App'       => Illuminate\Support\Facades\App::class,
-        'Artisan'   => Illuminate\Support\Facades\Artisan::class,
-        'Auth'      => Illuminate\Support\Facades\Auth::class,
-        'Blade'     => Illuminate\Support\Facades\Blade::class,
-        'Cache'     => Illuminate\Support\Facades\Cache::class,
-        'Config'    => Illuminate\Support\Facades\Config::class,
-        'Cookie'    => Illuminate\Support\Facades\Cookie::class,
-        'Crypt'     => Illuminate\Support\Facades\Crypt::class,
-        'DB'        => Illuminate\Support\Facades\DB::class,
-        'Eloquent'  => Illuminate\Database\Eloquent\Model::class,
-        'Event'     => Illuminate\Support\Facades\Event::class,
-        'File'      => Illuminate\Support\Facades\File::class,
-        'Gate'      => Illuminate\Support\Facades\Gate::class,
-        'Hash'      => Illuminate\Support\Facades\Hash::class,
-        'Lang'      => Illuminate\Support\Facades\Lang::class,
-        'Log'       => Illuminate\Support\Facades\Log::class,
-        'Mail'      => Illuminate\Support\Facades\Mail::class,
-        'Password'  => Illuminate\Support\Facades\Password::class,
-        'Queue'     => Illuminate\Support\Facades\Queue::class,
-        'Redirect'  => Illuminate\Support\Facades\Redirect::class,
-        'Redis'     => Illuminate\Support\Facades\Redis::class,
-        'Request'   => Illuminate\Support\Facades\Request::class,
-        'Response'  => Illuminate\Support\Facades\Response::class,
-        'Route'     => Illuminate\Support\Facades\Route::class,
-        'Schema'    => Illuminate\Support\Facades\Schema::class,
-        'Session'   => Illuminate\Support\Facades\Session::class,
-        'Storage'   => Illuminate\Support\Facades\Storage::class,
-        'URL'       => Illuminate\Support\Facades\URL::class,
-        'Validator' => Illuminate\Support\Facades\Validator::class,
-        'View'      => Illuminate\Support\Facades\View::class,
-        'Form'      => Collective\Html\FormFacade::class,
-        'Html'      => Collective\Html\HtmlFacade::class,
-        'Datatables' => Yajra\Datatables\Datatables::class,
-        'Carbon'     => Carbon\Carbon::class,
-        'Notifty'    => Illuminate\Support\Facades\Notification::class,
-        'Entrust'   => App\Zizaco\Entrust\EntrustFacade::class,
-        'role' => App\Zizaco\Entrust\Middleware\EntrustRole::class,
-        'permission' => App\Zizaco\Entrust\Middleware\EntrustPermission::class,
-        'ability' => App\Zizaco\Entrust\Middleware\EntrustAbility::class,
+    'debug_blacklist' => [
+        '_ENV' => [
+            'APP_KEY',
+            'DB_PASSWORD',
+            'REDIS_PASSWORD',
+            'MAIL_PASSWORD',
+            'PUSHER_APP_KEY',
+            'PUSHER_APP_SECRET',
+            'FTP_PASSWORD',
+            'RAZORPAY_SECRET',
+            'AWS_ACCESS_KEY_ID',
+            'AWS_SECRET_ACCESS_KEY'
+        ],
+        '_SERVER' => [
+            'APP_KEY',
+            'DB_PASSWORD',
+            'REDIS_PASSWORD',
+            'MAIL_PASSWORD',
+            'PUSHER_APP_KEY',
+            'PUSHER_APP_SECRET',
+            'FTP_PASSWORD',
+            'RAZORPAY_SECRET',
+            'AWS_ACCESS_KEY_ID',
+            'AWS_SECRET_ACCESS_KEY'
+
+        ],
+        '_POST' => [
+            'password',
+        ],
     ],
 
 ];

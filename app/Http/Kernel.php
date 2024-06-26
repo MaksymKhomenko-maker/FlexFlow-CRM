@@ -2,7 +2,16 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\DisableFrontend;
+use App\Http\Middleware\EmailVerified;
+use App\Http\Middleware\MultiCompanySelect;
+use App\Http\Middleware\SuperAdmin;
+use App\Http\Middleware\TrimStrings;
+use Froiden\Envato\Middleware\XSS;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
+use Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull;
+use Illuminate\Foundation\Http\Middleware\ValidatePostSize;
+use Illuminate\Http\Middleware\HandleCors;
 
 class Kernel extends HttpKernel
 {
@@ -14,7 +23,13 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
-        \Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode::class,
+        \App\Http\Middleware\TrustProxies::class,
+        \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
+        ValidatePostSize::class,
+        TrimStrings::class,
+        ConvertEmptyStringsToNull::class,
+        XSS::class,
+        HandleCors::class
     ];
 
     /**
@@ -24,36 +39,19 @@ class Kernel extends HttpKernel
      */
     protected $middlewareGroups = [
         'web' => [
+            \Illuminate\Session\Middleware\StartSession::class,
             \App\Http\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-            \Illuminate\Session\Middleware\StartSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
-            \App\Http\Middleware\LogLastUserActivity::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \App\Http\Middleware\Translation::class
-            ],
-        'client.create' => [ \App\Http\Middleware\Client\CanClientCreate::class ],
-        'client.update' => [ \App\Http\Middleware\Client\CanClientUpdate::class ],
-        'user.create' => [ \App\Http\Middleware\User\CanUserCreate::class ],
-        'user.update' => [ \App\Http\Middleware\User\CanUserUpdate::class ],
-        'task.create' => [ \App\Http\Middleware\Task\CanTaskCreate::class ],
-        'task.update.status' => [ \App\Http\Middleware\Task\CanTaskUpdateStatus::class ],
-        'task.assigned' => [ \App\Http\Middleware\Task\IsTaskAssigned::class ],
-        'lead.create' => [ \App\Http\Middleware\Lead\CanLeadCreate::class ],
-        'lead.assigned' => [ \App\Http\Middleware\Lead\IsLeadAssigned::class ],
-        'lead.update.status' => [ \App\Http\Middleware\Lead\CanLeadUpdateStatus::class ],
-        'user.is.admin' => [ \App\Http\Middleware\RedirectIfNotAdmin::class ],
-        'user.is.superadmin' => [ \App\Http\Middleware\RedirectIfNotSuperAdmin::class ],
-        'filesystem.is.enabled' => [ \App\Http\Middleware\RedirectIfFileSystemIsNotEnabled::class],
-        'is.demo' => [ \App\Http\Middleware\RedirectIfDemo::class],
-        'api' => [
-            'auth:api',
-            'throttle:60,1',
-            'bindings',
-
         ],
 
+        'api' => [
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            \Illuminate\Routing\Middleware\ThrottleRequests::class.':api',
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        ],
     ];
 
     /**
@@ -64,11 +62,35 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $routeMiddleware = [
-        'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
+        'auth' => \App\Http\Middleware\Authenticate::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
-        'bindings' => \Illuminate\Routing\Middleware\SubstituteBindings::class,
+        'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
         'can' => \Illuminate\Auth\Middleware\Authorize::class,
         'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+        'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
+        'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'email_verified' => EmailVerified::class,
+
+        // WORKSUITESAAS
+        'super-admin' => SuperAdmin::class,
+        'multi-company-select' => MultiCompanySelect::class,
+        'disable-frontend' => DisableFrontend::class,
+        'admin-or-super-admin' => \App\Http\Middleware\AdminOrSuperAdmin::class,
+        'translation' => \App\Http\Middleware\EnsureTranslationToken::class,
+        'check-company-package' => \App\Http\Middleware\CheckCompanyPackage::class,
+        'auto-logout' => \App\Http\Middleware\AutoLogout::class,
+    ];
+
+    /**
+     * The application's middleware aliases.
+     *
+     * Aliases may be used to conveniently assign middleware to routes and groups.
+     *
+     * @var array<string, class-string|string>
+     */
+    protected $middlewareAliases = [
+        'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
     ];
 }

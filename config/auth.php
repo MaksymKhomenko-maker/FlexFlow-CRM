@@ -42,8 +42,8 @@ return [
         ],
 
         'api' => [
-            'driver' => 'passport',
-            'provider' => 'users',
+            'driver' => 'session',
+            'provider' => 'api_users',
         ],
     ],
 
@@ -67,25 +67,20 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\User::class,
-            'table' => 'users',
-
+            'model' => App\Models\UserAuth::class,
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        'api_users' => [
+            'driver' => 'eloquent',
+            'model' => Modules\RestAPI\Entities\UserAuth::class,
+            'table' => 'users'
+        ],
     ],
 
     /*
     |--------------------------------------------------------------------------
     | Resetting Passwords
     |--------------------------------------------------------------------------
-    |
-    | Here you may set the options for resetting passwords including the view
-    | that is your password reset e-mail. You may also set the name of the
-    | table that maintains all of the reset tokens for your application.
     |
     | You may specify multiple password reset configurations if you have more
     | than one user table or model in the application and you want to have
@@ -100,10 +95,27 @@ return [
     'passwords' => [
         'users' => [
             'provider' => 'users',
-            'email' => 'auth.emails.password',
             'table' => 'password_resets',
             'expire' => 60,
+            'throttle' => 60,
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Password Confirmation Timeout
+    |--------------------------------------------------------------------------
+    |
+    | Here you may define the amount of seconds before a password confirmation
+    | times out and the user is prompted to re-enter their password via the
+    | confirmation screen. By default, the timeout lasts for three hours.
+    |
+    */
+
+    'password_timeout' => 10800,
+
+    'verification' => [
+        'expire' => 60
+    ]
 
 ];

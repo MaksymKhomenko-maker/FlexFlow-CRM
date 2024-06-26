@@ -2,35 +2,50 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\Search\SearchService;
-use Illuminate\Http\Request;
-use App\Models\Client;
+use App\Helper\Reply;
+use App\Http\Requests\SearchRequest;
 
-class SearchController extends Controller
+class SearchController extends AccountBaseController
 {
-    public function search($query, $type)
-    {
-        if (config('services.elasticsearch.enabled')) {
-            return response()->json(app(SearchService::class)->search($query, $type));
-        }
 
-        $type = ucfirst(rtrim($type, 's'));
-        $class = '\\App\\Models\\' . $type;
-        $searchClass = new $class();
-        $result["hits"] = [];
-        foreach ($searchClass->getSearchableFields() as $searchableField) {
-            $classes = $searchClass->where($searchableField, 'LIKE', '%' . $query . '%')->get();
-            foreach ($classes as $class) {
-                $source = new \stdClass();
-                $source->_source = new \stdClass();
-                if (!$class->displayValue() || !$class->searchLink()) {
-                    continue;
-                }
-                $source->_source->display_value = $class->displayValue();
-                $source->_source->link = $class->searchLink();
-                $result["hits"]["hits"][] = $source;
-            }
-        }
-        return response()->json($result);
+    public function index()
+    {
+        return view('search.index', $this->data);
     }
+
+    /**
+     * @param SearchRequest $request
+     * @return array|string[]|void
+     */
+    public function store(SearchRequest $request)
+    {
+        $module = $request->search_module;
+
+        switch ($module) {
+        case 'project':
+            return Reply::redirect(route('projects.index') . '?search_keyword=' . $request->search_keyword);
+        case 'ticket':
+            return Reply::redirect(route('tickets.index') . '?search_keyword=' . $request->search_keyword);
+        case 'invoice':
+            return Reply::redirect(route('invoices.index') . '?search_keyword=' . $request->search_keyword);
+        case 'notice':
+            return Reply::redirect(route('notices.index') . '?search_keyword=' . $request->search_keyword);
+        case 'task':
+            return Reply::redirect(route('tasks.index') . '?search_keyword=' . $request->search_keyword);
+        case 'creditNote':
+            return Reply::redirect(route('creditnotes.index') . '?search_keyword=' . $request->search_keyword);
+        case 'employee':
+            return Reply::redirect(route('employees.index') . '?search_keyword=' . $request->search_keyword);
+        case 'client':
+            return Reply::redirect(route('clients.index') . '?search_keyword=' . $request->search_keyword);
+        case 'estimate':
+            return Reply::redirect(route('estimates.index') . '?search_keyword=' . $request->search_keyword);
+        case 'lead':
+            return Reply::redirect(route('deals.index') . '?search_keyword=' . $request->search_keyword);
+        default:
+            // Code...
+            break;
+        }
+    }
+
 }

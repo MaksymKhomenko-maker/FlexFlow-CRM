@@ -8,45 +8,70 @@ return [
     |--------------------------------------------------------------------------
     |
     | This file is for storing the credentials for third party services such
-    | as Stripe, Mailgun, Mandrill, and others. This file provides a sane
-    | default location for this type of information, allowing packages
-    | to have a conventional place to find your various credentials.
+    | as Mailgun, Postmark, AWS and more. This file provides the de facto
+    | location for this type of information, allowing packages to have
+    | a conventional file to locate the various service credentials.
     |
     */
 
     'mailgun' => [
-        'domain' => env('MAILGUN_DOMAIN', null),
-        'secret' => env('MAILGUN_SECRET', null),
-        'endpoint' => env('MAILGUN_ENDPOINT', 'api.eu.mailgun.net'),
+        'domain' => env('MAILGUN_DOMAIN'),
+        'secret' => env('MAILGUN_SECRET'),
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
     ],
 
-    'mandrill' => [
-        'secret' => env('MANDRILL_SECRET'),
+    'postmark' => [
+        'token' => env('POSTMARK_TOKEN'),
+    ],
+
+    'authorize' => [
+        'login' => env('AUTHORIZE_PAYMENT_API_LOGIN_ID'),
+        'transaction' => env('AUTHORIZE_PAYMENT_TRANSACTION_KEY'),
+        'sandbox' => env('AUTHORIZE_SANDBOX', true),
+    ],
+
+    'square' => [
+        'application_id' => env('SQUARE_APPLICATION_ID'),
+        'access_token' => env('SQUARE_ACCESS_TOKEN'),
+        'location_id' => env('SQUARE_ACCESS_TOKEN'),
+        'environment' => env('SQUARE_ENVIRONMENT', 'sandbox'),
     ],
 
     'ses' => [
-        'key'    => env('SES_KEY'),
-        'secret' => env('SES_SECRET'),
-        'region' => 'us-east-1',
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
-    'dinero' => [
-        'secret' => env('DINERO_SECRET', null),
-        'client' => env('DINERO_CLIENT_ID', null),
+
+    'telegram-bot-api' => [
+        'token' => env('TELEGRAM_BOT_TOKEN', 'YOUR BOT TOKEN HERE')
     ],
-    'stripe' => [
-        'model'  => App\Models\Tenant::class,
-        'key' => env('STRIPE_KEY'),
-        'secret' => env('STRIPE_SECRET'),
+
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT'),
+        'redirect_uri' => (env('APP_URL') . '/account/settings/google-auth'),
+        // Let the user know what we will be using from his Google account.
+        'scopes' => [
+            // Getting access to the user's email.
+            \Google_Service_Oauth2::USERINFO_EMAIL,
+            \Google_Service_Oauth2::USERINFO_PROFILE,
+            // Managing the user's calendars and events.
+            \Google_Service_Calendar::CALENDAR,
+        ],
+        // Enables automatic token refresh.
+        'approval_prompt' => 'force',
+        'access_type' => 'offline',
+        // Enables incremental scopes (useful if in the future we need access to another type of data).
+        'include_granted_scopes' => true,
     ],
-    'dropbox' => [
-        'client_id' => env('DROPBOX_CLIENT_ID', null),
-        'client_secret' => env('DROPBOX_CLIENT_SECRET', null),
+
+    'sentry' => [
+        'enabled' => env('SENTRY_ENABLED', false)
     ],
-    'google-drive' => [
-        'client_id' => env('GOOGLE_DRIVE_CLIENT_ID', null),
-        'client_secret' => env('GOOGLE_DRIVE_CLIENT_SECRET', null),
-    ],
-    'elasticsearch' => [
-        'enabled' => env('ELASTICSEARCH_ENABLED', false),
+    'onesignal' => [
+        'app_id' => 'YOUR-APP-ID-HERE',
+        'rest_api_key' => 'YOUR-REST-API-KEY-HERE',
     ],
 ];

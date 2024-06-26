@@ -1,81 +1,280 @@
-@extends('layouts.app')
+@push('styles')
+    @foreach ($frontWidgets as $item)
+    @if(!is_null($item->header_script))
+        {!! $item->header_script !!}
+    @endif
 
-@section('content')
-    <div class="container" >
-        <div class="row">
-            <div class="col-md-5 col-md-offset-4">
-                <div class="tablet">
-                 <form class="form-horizontal" role="form" method="POST" action="{{ url('/login') }}">
-                            {!! csrf_field() !!}
+    @endforeach
+@endpush
 
-                            @if(isDemo()) 
-                            <div class="alert alert-info">
-                                <strong>Demo login info</strong> 
-                                <p>Email: demo@daybydaycrm.com</p>
-                                <p>Password: Daybydaycrm123</p>
-                            </div>
-                            @endif
-                            <div class="form-group{{ $errors->has('email') ? ' has-error' : '' }}">
-                            <div class="inner-addon right-addon">
-                                <div class="col-md-12 input-group-lg">
-                                    <i class="fa fa-user" aria-hidden="true"></i>
-                                    <input type="email" value="{{isDemo() ? 'demo@daybydaycrm.com' : ''}}" class="form-control" style="border-radius: 4px; box-shadow:0px 2px 4px rgba(0,0,0,0.18); padding-right:40px; " name="email" value="{{ old('email') }}" placeholder="E-mail address">
 
-                                </div>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group{{ $errors->has('password') ? ' has-error' : '' }}">
-                            <div class="inner-addon right-addon">
-                                <div class="col-md-12 input-group-lg">
-                                <i class="fa fa-lock" aria-hidden="true"></i>
-                                    <input type="password" class="form-control" value="{{isDemo() ? 'Daybydaycrm123' : ''}}"  style="border-radius: 4px; box-shadow:0px 2px 4px rgba(0,0,0,0.18);" name="password" placeholder="Password">
-                                </div>
-                            </div>
-                        </div>
-                            <div class="form-group">
-                                <div class="col-md-12">
-                                    <div class="checkbox">
-                                        <label style="font-weight: 300; color:#333;">
-                                            <input type="checkbox" name="remember"> Remember Me
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
+<x-auth>
+    <form id="login-form" action="{{ route('login') }}" class="ajax-form" method="POST">
+        {{ csrf_field() }}
+        <h3 class="text-capitalize mb-4 f-w-500">@lang('app.login')</h3>
 
-                            <div class="form-group">
-                                <div class="col-md-12">
-                                
-                                    <button type="submit" class="btn btn-success btn-lg btn-block" style="border-radius: 2px; box-shadow: 0px 2px 4px rgba(0,0,0,0.18);   background: #536be2; border: none;">
-                                        <i class="fa fa-btn fa-sign-in"></i>Login
-                                    </button>
-                                </div>
-                                <div class="col-md-6 col-md-offset-2" style="padding-left: 60px;">
-                                    <a class="btn btn-link" href="{{ url('/password/reset') }}" style="color:#333; margin-top:8px;">Forgot Your
-                                        Password?</a>
-                                </div>
-                            </div>
-                            <div class="col-md-12">
-                               
-                                 @if ($errors->has('email'))
-                                        <span class="help-block">
-                                        <strong>{{ $errors->first('email') }}</strong>
-                                    </span>
-                                    @endif
-                                 @if ($errors->has('password'))
-                                        <span class="help-block">
-                                        <strong>{{ $errors->first('password') }}</strong>
-                                    </span>
-                                @endif
-                                @if (Session::has('message'))
-                                        <span class="help-block">
-                                        <strong>{{ Session::get('message') }}</strong>
-                                    </span>
-                                @endif
-                            </div>
-                    </form>
-                    </div>
-            </div>
+        <script>
+            const facebook = "{{ route('social_login', 'facebook') }}";
+            const google = "{{ route('social_login', 'google') }}";
+            const twitter = "{{ route('social_login', 'twitter') }}";
+            const linkedin = "{{ route('social_login', 'linkedin') }}";
+        </script>
+
+        @if ($socialAuthSettings->google_status == 'enable')
+            <a class="mb-3 height_50 rounded f-w-500" onclick="window.location.href = google;">
+                <span><img src="{{ asset('img/google.png') }}" alt="Google"/></span>
+                @lang('auth.signInGoogle')</a>
+        @endif
+        @if ($socialAuthSettings->facebook_status == 'enable')
+            <a class="mb-3 height_50 rounded f-w-500" onclick="window.location.href = facebook;">
+                <span><img src="{{ asset('img/fb.png') }}" alt="Google"/></span>
+                @lang('auth.signInFacebook')
+            </a>
+        @endif
+        @if ($socialAuthSettings->twitter_status == 'enable')
+            <a class="mb-3 height_50 rounded f-w-500" onclick="window.location.href = twitter;">
+                <span><img src="{{ asset('img/twitter.png') }}" alt="Google"/></span>
+                @lang('auth.signInTwitter')
+            </a>
+        @endif
+        @if ($socialAuthSettings->linkedin_status == 'enable')
+            <a class="mb-3 height_50 rounded f-w-500" onclick="window.location.href = linkedin;">
+                <span><img src="{{ asset('img/linkedin.png') }}" alt="Google"/></span>
+                @lang('auth.signInLinkedin')
+            </a>
+        @endif
+
+        @if ($socialAuthSettings->social_auth_enable)
+            <p class="position-relative my-4">@lang('auth.useEmail')</p>
+        @endif
+
+        <div class="form-group text-left">
+            <label for="email">@lang('auth.email')</label>
+            <input tabindex="1" type="email" name="email"
+                   class="form-control height-50 f-15 light_text @error('email') is-invalid @enderror"
+                   autofocus
+                   value="{{request()->old('email')}}"
+                   placeholder="@lang('auth.email')" id="email">
+            @if ($errors->has('email'))
+                <div class="invalid-feedback">{{ $errors->first('email') }}</div>
+            @endif
+            @if ($socialAuthSettings->social_auth_enable_count>1)
+                <div class="forgot_pswd mt-2" id="forget-pass-email-section">
+                    <a href="{{ url('forgot-password') }}">@lang('app.forgotPassword')</a>
+                </div>
+            @endif
         </div>
-    </div>
-@endsection
+
+        @if ($socialAuthSettings->social_auth_enable_count>1 && !$errors->has('g-recaptcha-response'))
+            <button type="submit" id="submit-next"
+                    class="btn-primary f-w-500 rounded w-100 height-50 f-18"> @lang('auth.next') <i
+                    class="fa fa-arrow-right pl-1"></i></button>
+
+            @if ($company->allow_client_signup)
+                <a href="{{ route('register') }}" id="signup-client-next"
+                   class="btn-secondary f-w-500 rounded w-100 height-50 f-15 mt-3">
+                    @lang('app.signUpAsClient')
+                </a>
+            @endif
+
+        @if (isWorksuiteSaas() && !module_enabled('Subdomain'))
+                @if ($globalSetting->enable_register)
+                    <a href="{{ route('front.signup.index') }}" id="signup-customer"
+                       class="btn-secondary f-w-500 rounded w-100 height-50 f-15 mt-3">
+                        @lang('app.signUp')
+                    </a>
+                @endif
+            @endif
+
+        @endif
+
+        <div id="password-section"
+             @if ($socialAuthSettings->social_auth_enable_count > 1 && !$errors->has('g-recaptcha-response')) class="d-none" @endif>
+            <div class="form-group text-left">
+                <label for="password">@lang('app.password')</label>
+                <x-forms.input-group>
+                    <input type="password" name="password" id="password"
+                           placeholder="@lang('placeholders.password')" tabindex="3"
+                           class="form-control height-50 f-15 light_text @error('password') is-invalid @enderror">
+
+                    <x-slot name="append">
+                        <button type="button" data-toggle="tooltip"
+{{--                                data-original-title="@lang('app.viewPassword')"--}}
+                                class="btn btn-outline-secondary border-grey height-50 toggle-password">
+                            <i
+                                class="fa fa-eye"></i></button>
+                    </x-slot>
+
+                </x-forms.input-group>
+                @if ($errors->has('password'))
+                    <div class="invalid-feedback d-block">{{ $errors->first('password') }}</div>
+                @endif
+            </div>
+            <div class="forgot_pswd mb-3">
+                <a href="{{ url('forgot-password') }}">@lang('app.forgotPassword')</a>
+            </div>
+
+            <div class="form-group text-left ">
+                <input id="checkbox-signup" class="cursor-pointer" type="checkbox" name="remember">
+                <label for="checkbox-signup" class="cursor-pointer">@lang('app.rememberMe')</label>
+            </div>
+
+            @if ($globalSetting->google_recaptcha_status == 'active')
+                <div class="form-group" id="captcha_container"></div>
+            @endif
+
+            <input type="hidden" id="g_recaptcha" name="g_recaptcha">
+
+            @if ($errors->has('g-recaptcha-response'))
+                <div
+                    class="invalid-feedback  d-block text-left">{{ $errors->first('g-recaptcha-response') }}
+                </div>
+            @endif
+
+            <button type="submit" id="submit-login"
+                    class="btn-primary f-w-500 rounded w-100 height-50 f-18">
+                @lang('app.login') <i class="fa fa-arrow-right pl-1"></i>
+            </button>
+            {{-- SAAS --}}
+            @if ($company?->allow_client_signup && isWorksuite())
+                <a href="{{ route('register') }}"
+                   class="btn-secondary f-w-500 rounded w-100 height-50 f-15 mt-3">
+                    @lang('app.signUpAsClient')
+                </a>
+            @endif
+        </div>
+
+        <x-slot name="outsideLoginBox">
+            @if (isWorksuiteSaas())
+                @php
+                    $subdomain = config('app.main_application_subdomain');
+                    $rootCrmSubDomain = preg_replace('#^https?://#', '', $subdomain);
+                    $redirect = route('front.home');
+                    $signup = route('front.signup.index');
+                    if(module_enabled('Subdomain')){
+                        $redirect = (!is_null($rootCrmSubDomain) && $rootCrmSubDomain !=='')?'//'.$rootCrmSubDomain:'//'.getDomain();
+                        $signup = $redirect.'/signup';
+                    }
+                @endphp
+
+                @if(!$globalSetting->frontend_disable)
+                    <p class="my-2 f-12"><a
+                            href="{{ $redirect }}"
+                            class="text-dark-grey">@lang('superadmin.goToWebsite')</a>
+                    </p>
+                @endif
+                @if ($globalSetting->enable_register)
+                    <p class="my-2 f-12">@lang('superadmin.dontHaveAccount') <a
+                            href="{{ $signup }}"
+                            class="text-dark-grey">@lang('app.signUp') </a>
+                    </p>
+                @endif
+            @endif
+        </x-slot>
+
+    </form>
+
+    <x-slot name="scripts">
+
+
+        @if ($globalSetting->google_recaptcha_status == 'active' && $globalSetting->google_recaptcha_v2_status == 'active')
+            <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async
+                    defer></script>
+            <script>
+                var gcv3;
+                var onloadCallback = function () {
+                    // Renders the HTML element with id 'captcha_container' as a reCAPTCHA widget.
+                    // The id of the reCAPTCHA widget is assigned to 'gcv3'.
+                    gcv3 = grecaptcha.render('captcha_container', {
+                        'sitekey': '{{ $globalSetting->google_recaptcha_v2_site_key }}',
+                        'theme': 'light',
+                        'callback': function (response) {
+                            if (response) {
+                                $('#g_recaptcha').val(response);
+                            }
+                        },
+                    });
+                };
+            </script>
+        @endif
+        @if ($globalSetting->google_recaptcha_status == 'active' && $globalSetting->google_recaptcha_v3_status == 'active')
+            <script
+                src="https://www.google.com/recaptcha/api.js?render={{ $globalSetting->google_recaptcha_v3_site_key }}"></script>
+            <script>
+                grecaptcha.ready(function () {
+                    grecaptcha.execute('{{ $globalSetting->google_recaptcha_v3_site_key }}').then(function (token) {
+                        // Add your logic to submit to your backend server here.
+                        $('#g_recaptcha').val(token);
+                    });
+                });
+            </script>
+        @endif
+
+        <script>
+
+            $(document).ready(function () {
+
+                $("form#login-form").submit(function () {
+                    const button = $('form#login-form').find('#submit-login');
+
+                    const text = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> {{__('app.loading')}}';
+
+                    button.prop("disabled", true);
+                    button.html(text);
+                });
+
+                function handleFormSubmit(e) {
+                    e.preventDefault();
+                }
+
+                $('#submit-next').click(function (event) {
+                    event.preventDefault();
+                    document.addEventListener('click', handleFormSubmit, false);
+
+                    const url = "{{ route('check_email') }}";
+                    $.easyAjax({
+                        url: url,
+                        container: '#login-form',
+                        disableButton: true,
+                        buttonSelector: "#submit-next",
+                        type: "POST",
+                        data: $('#login-form').serialize(),
+                        success: function (response) {
+                            if (response.status === 'success') {
+                                $('#submit-next, #signup-client-next, #signup-customer').remove();
+                                $('#password-section').removeClass('d-none');
+                                $('#forget-pass-email-section').remove();
+                                $("#password").focus();
+                                document.removeEventListener('click', handleFormSubmit);
+                            }
+                        }
+                    })
+                });
+
+                @if (session('message'))
+                Swal.fire({
+                    icon: 'error',
+                    text: '{{ session('message') }}',
+                    showConfirmButton: true,
+                    customClass: {
+                        confirmButton: 'btn btn-primary',
+                    },
+                    showClass: {
+                        popup: 'swal2-noanimation',
+                        backdrop: 'swal2-noanimation'
+                    },
+                })
+                @endif
+
+            });
+        </script>
+
+        @foreach ($frontWidgets as $item)
+        @if(!is_null($item->footer_script))
+            {!! $item->footer_script !!}
+        @endif
+
+        @endforeach
+    </x-slot>
+
+</x-auth>

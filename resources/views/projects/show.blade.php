@@ -1,257 +1,297 @@
-@extends('layouts.master')
+@extends('layouts.app')
+
+@push('datatable-styles')
+    @include('sections.datatable_css')
+@endpush
+
+@php
+$viewProjectMemberPermission = user()->permission('view_project_members');
+$viewProjectMilestonePermission = ($project->project_admin == user()->id) ? 'all' : user()->permission('view_project_milestones');
+$viewTasksPermission = ($project->project_admin == user()->id) ? 'all' : user()->permission('view_project_tasks');
+$viewGanttPermission = ($project->project_admin == user()->id) ? 'all' : user()->permission('view_project_gantt_chart');
+$viewInvoicePermission = user()->permission('view_project_invoices');
+$viewDiscussionPermission = user()->permission('view_project_discussions');
+$viewNotePermission = user()->permission('view_project_note');
+$viewFilesPermission = user()->permission('view_project_files');
+$viewRatingPermission = user()->permission('view_project_rating');
+$viewOrderPermission = user()->permission('view_project_orders');
+
+$projectArchived = $project->trashed();
+@endphp
+
+
+@section('filter-section')
+    <!-- FILTER START -->
+    <!-- PROJECT HEADER START -->
+
+    <div class="d-flex d-lg-block filter-box project-header bg-white">
+        <div class="mobile-close-overlay w-100 h-100" id="close-client-overlay"></div>
+
+        <div class="project-menu" id="mob-client-detail">
+            <a class="d-none close-it" href="javascript:;" id="close-client-detail">
+                <i class="fa fa-times"></i>
+            </a>
+
+            <nav class="tabs">
+                <ul class="-primary">
+                    <li>
+                        <x-tab :href="route('projects.show', $project->id)" :text="__('modules.projects.overview')" class="overview" />
+                    </li>
+
+                    @if (
+                        !$project->public && $viewProjectMemberPermission == 'all'
+                    )
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=members'" :text="__('modules.projects.members')"
+                            class="members" />
+                        </li>
+                    @endif
+
+                    @if ($viewFilesPermission == 'all' || ($viewFilesPermission == 'added' && user()->id == $project->added_by) || ($viewFilesPermission == 'owned' && user()->id == $project->client_id))
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=files'" :text="__('modules.projects.files')"
+                            class="files" />
+                        </li>
+                    @endif
+
+                    @if ($viewProjectMilestonePermission == 'all' || $viewProjectMilestonePermission == 'added' || ($viewProjectMilestonePermission == 'owned' && user()->id == $project->client_id))
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=milestones'"
+                            :text="__('modules.projects.milestones')" class="milestones" />
+                        </li>
+                    @endif
+
+                    @if (in_array('tasks', user_modules()) && ($viewTasksPermission == 'all' || ($viewTasksPermission == 'added' && user()->id == $project->added_by) || ($viewTasksPermission == 'owned' && user()->id == $project->client_id)))
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=tasks'" :text="__('app.menu.tasks')" class="tasks"
+                            ajax="false" />
+                        </li>
+
+                        @if (!$projectArchived)
+                            <li>
+                                <x-tab :href="route('projects.show', $project->id).'?tab=taskboard'" :text="__('modules.tasks.taskBoard')" class="taskboard" ajax="false" />
+                            </li>
+
+                            @if ($viewGanttPermission == 'all' || ($viewGanttPermission == 'added' && user()->id == $project->added_by) || ($viewGanttPermission == 'owned' && user()->id == $project->client_id))
+                                <li>
+                                    <x-tab :href="route('projects.show', $project->id).'?tab=gantt'" :text="__('modules.projects.viewGanttChart')" class="gantt" />
+                                </li>
+                            @endif
+                        @endif
+                    @endif
+
+                    @if (in_array('invoices', user_modules()) && !is_null($project->client_id) && ($viewInvoicePermission == 'all' || ($viewInvoicePermission == 'added' && user()->id == $project->added_by) || ($viewInvoicePermission == 'owned' && user()->id == $project->client_id)))
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=invoices'" :text="__('app.menu.invoices')" class="invoices" ajax="false" />
+                        </li>
+                    @endif
+
+                    @if (in_array('orders', user_modules()) && !is_null($project->client_id) && ($viewOrderPermission == 'all' || ($viewOrderPermission == 'added' && user()->id == $project->added_by) || ($viewOrderPermission == 'owned' && user()->id == $project->client_id)))
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=orders'" :text="__('app.menu.orders')" class="orders" ajax="false" />
+                        </li>
+                    @endif
+
+                    @if (in_array('timelogs', user_modules()) && ($viewProjectTimelogPermission == 'all' || ($viewProjectTimelogPermission == 'added' && user()->id == $project->added_by) || ($viewProjectTimelogPermission == 'owned' && user()->id == $project->client_id)))
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=timelogs'" :text="__('app.menu.timeLogs')" class="timelogs" ajax="false" />
+                        </li>
+                    @endif
+
+                    @if (in_array('expenses', user_modules()) && ($viewExpensePermission == 'all' || ($viewExpensePermission == 'added' && user()->id == $project->added_by) || ($viewExpensePermission == 'owned' && user()->id == $project->client_id)))
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=expenses'" :text="__('app.menu.expenses')" class="expenses" ajax="false" />
+                        </li>
+                    @endif
+
+                    @if ($viewMiroboardPermission == 'all' && $project->enable_miroboard &&
+                    ((in_array('client', user_roles()) && $project->client_access && $project->client_id == user()->id)
+                    || !in_array('client', user_roles()))
+                    )
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=miroboard'" :text="__('app.menu.miroboard')" class="miroboard" ajax="false" />
+                        </li>
+                    @endif
+
+                    @if (in_array('payments', user_modules()) && !is_null($project->client_id) && ($viewPaymentPermission == 'all' || ($viewPaymentPermission == 'added' && user()->id == $project->added_by) || ($viewPaymentPermission == 'owned' && user()->id == $project->client_id)))
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=payments'" :text="__('app.menu.payments')" class="payments" ajax="false" />
+                        </li>
+                    @endif
+
+                    @if ($viewDiscussionPermission == 'all' || ($viewDiscussionPermission == 'added' && user()->id == $project->added_by) || ($viewDiscussionPermission == 'owned' && user()->id == $project->client_id))
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=discussion'" :text="__('modules.projects.discussion')" class="discussion" ajax="false" />
+                        </li>
+                    @endif
+
+                    @if ($viewNotePermission != 'none' )
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=notes'" :text="__('modules.projects.note')" class="notes" ajax="false" />
+                        </li>
+                    @endif
+
+                    @if ($viewRatingPermission != 'none' && !is_null($project->client_id))
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=rating'" :text="__('modules.projects.rating')" class="rating" ajax="false" />
+                        </li>
+                    @endif
+
+                    @if($viewBurndownChartPermission != 'none' || $project->project_admin == user()->id)
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=burndown-chart'"
+                                :text="__('modules.projects.burndownChart')" class="burndown-chart" ajax="false" />
+                        </li>
+                    @endif
+
+                    @if (!in_array('client', user_roles()))
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=activity'"
+                                :text="__('modules.employees.activity')" class="activity" />
+                        </li>
+                    @endif
+
+                    @if ($viewNotePermission != 'none' )
+                        <li>
+                            <x-tab :href="route('projects.show', $project->id).'?tab=tickets'" :text="__('app.menu.tickets')" class="tickets" ajax="false" />
+                        </li>
+                    @endif
+                </ul>
+            </nav>
+        </div>
+
+        <a class="mb-0 d-block d-lg-none text-dark-grey ml-auto mr-2 border-left-grey" onclick="openClientDetailSidebar()"><i class="fa fa-ellipsis-v "></i></a>
+    </div>
+
+
+
+    <!-- PROJECT HEADER END -->
+
+@endsection
 
 @section('content')
-<div class="row">
-    @include('partials.clientheader')
-    @include('partials.userheader', ['changeUser' => false])
-</div>
 
-<div class="row">
-    <div class="col-lg-12">
-        <div class="project-board-ui">
-            <nav class="navbar board text-black ">
-                @if(!$project->isClosed())
-                <a href="{{route('client.project.task.create', [$client->external_id, $project->external_id])}}" class="btn btn-md btn-brand" style="margin:1em;">@lang('New task')</a>
-            @endif
-        </nav>
-            <div class="project-board-lists">
-                @foreach($statuses as $status)
-                <div class="project-board-list">
-                    <header>{{ __($status->title)}}</header>
-                    <ul class="sortable" id="{{$status->title}}" data-status-external-id="{{$status->external_id}}" style="min-height: 32em;">
-                        @foreach($tasks as $task)
-                        <li data-task-id="{{$task->external_id}}">
-                            @if($task->status_id == $status->id)
-                                <div class="project-board-card-wrapper">
-                                  <div class="project-board-card">
-                                    <div class="position-relative">
-                                    </div>
-                                    <p class="project-board-card-title"><a href="{{route('tasks.show', $task->external_id)}}" class="link-color">{{$task->title}}</a></p>
-                                    <div class="project-board-card-description">{!! str_limit($task->description, 154, '...') !!}</div>
-                                  </div>
-                                  <div class="project-board-card-footer">
-                                    <ul class="list-inline" style="padding: 8px; min-height: 3.3em;">
-                                        <li class="project-board-card-list">20, February 2019</li>
-                                        <li class="project-board-card-thumbnail text-right" style="float:right;">
-                                        <a href="{{route('users.show', $task->user->external_id)}}" ><img src="{{$task->user->avatar}}" class="project-board-card-thumbnail-image" title="{{$task->user->name}}"/></a>
-                                        </li>
-                                    </ul>
-                                  </div>
-                                </div> 
-                            @endif
-                        @endforeach
-                        </li>
-                    </ul>
-                </div>
-                    @endforeach  
-            </div>
-        </div>
+    <div class="content-wrapper pt-0 border-top-0 client-detail-wrapper">
+        @include($view)
     </div>
-</div>
 
-<div class="row movedown">
-    <div class="col-lg-8">
-        <div class="tablet">
-            <div class="tablet__body">
-                <h3 class="tablet__head-title">@lang('Project completion progress')</h3>
-                <div class="progress">
-                  <div class="progress-bar" role="progressbar" style="width: {{$completionPercentage}}%;" aria-valuenow="{{$completionPercentage}}" aria-valuemin="0" aria-valuemax="{{$completionPercentage}}">{{$completionPercentage}}%</div>
-                </div>
-            </div> 
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="tablet">
-            <div class="tablet__body">
-                <h3 class="tablet__head-title">@lang('Collaborators')</h3>
-                <ul class="list-inline">
-                @foreach($collaborators as $collaborator)
-                <li>
-                     <a href="{{route('users.show', $collaborator->external_id)}}" >
-                        <img src="{{$collaborator->avatar}}" class="project-board-card-thumbnail-image" title="{{$collaborator->name}}"/>
-                    </a>
-                </li>
-                @endforeach
-                </ul>
-            </div> 
-        </div>
-    </div>
-</div>
-
-<div class="row movedown">
-      <div class="col-sm-8">
-          @include('partials.comments', ['subject' => $project])
-      </div>
-      <div class="col-sm-4">
-      <div class="tablet">
-          <div class="tablet__head tablet__head__color-brand">
-              <div class="tablet__head-label">
-                  <h3 class="tablet__head-title text-white">@lang('Information')</h3>
-              </div>
-          </div>
-          <div class="tablet__body">
-            @include('projects._sidebar')
-          </div>
-      </div>
-  </div>
-  <div class="col-sm-4">@if(Entrust::can('project-upload-files') && $filesystem_integration)
-                <div id="document" class="tab-pane">
-                    <div class="tablet">
-                        <div class="tablet__head">
-                            <div class="tablet__head-label">
-                                <h3 class="tablet__head-title">{{ __('All Files') }}</h3>
-                                <button id="add-files" style="
-                                margin-left: 30rem !important;
-                                border: 0;
-                                padding: 0;
-                                background: transparent;
-                                font-size:2em;">
-                                    <i class="icon ion-md-add-circle text-right"></i>
-                                </button>
-                            </div>
-
-                        </div>
-                        <div class="tablet__body">
-                            @if($files->count() == 0)
-                                <div class="tablet__item">
-                                    <div class="tablet__item__pic">
-                                        <p class="title">@lang('No files')</p>
-                                    </div>
-                                </div>
-                            @endif
-                            <div class="tablet__items">
-                                @foreach($files as $file)
-                                    <div class="tablet__item">
-                                        <div class="tablet__item__pic">
-                                            <img src="{{url('images/doc-icon.svg')}}" alt="">
-                                        </div>
-                                        <div class="tablet__item__info">
-
-                                            <a href="{{ route('document.view', $file->external_id) }}" class="tablet__item__title" target="_blank">{{$file->original_filename}}</a>
-                                            <div class="tablet__item__description">
-                                                {{$file->size}} MB
-                                            </div>
-                                        </div>
-                                        <div class="tablet__item__toolbar">
-                                            <div class="dropdown dropdown-inline">
-                                                <button type="button" class="btn btn-clean btn-sm btn-icon btn-icon-md"
-                                                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                    <i class="icon ion-md-more" style="font-size: 2.5em;"></i>
-                                                </button>
-                                                <div class="dropdown-menu dropdown-menu-right">
-                                                    <ul class="tablet__nav">
-                                                        <li class="nav-item">
-                                                            <a href=" {{ route('document.view', $file->external_id) }}" target="_blank" class="nav-link">
-                                                                <i class="icon ion-md-eye"></i>
-                                                                <span class="nav-link-text">@lang('View')</span>
-                                                            </a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a href=" {{ route('document.download', $file->external_id) }}" target="_blank" class="nav-link">
-                                                                <i class="icon ion-md-cloud-download"></i>
-                                                                <span class="nav-link-text">@lang('Download')</span>
-                                                            </a>
-                                                        </li>
-                                                        @if(Entrust::can('document-delete'))
-
-                                                            <li class="nav-item">
-                                            <span class="nav-link">
-                                                <i class="icon ion-md-trash"></i>
-                                                <form method="POST" action="{{action('DocumentsController@destroy', $file->external_id)}}">
-                                                    <input type="hidden" name="_method" value="delete"/>
-                                                    <input type="hidden" name="_token" value="{{csrf_token()}}"/>
-                                                    <button type="submit" class="btn btn-clean nav-link-text">{{__('Delete')}}</button>
-                                                </form>
-                                            </span>
-                                                            </li>
-                                                        @endif
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-                @endif</div>
-</div>
-
-
-@if(Entrust::can('project-update-deadline'))
-    <div class="modal fade" id="ModalUpdateDeadline" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                                aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title" id="myModalLabel">{{ __('Change deadline') }}</h4>
-                </div>
-
-                <div class="modal-body">
-
-                    {!! Form::model($project, [
-                      'method' => 'PATCH',
-                      'route' => ['project.update.deadline', $project->external_id],
-                      ]) !!}
-                    {!! Form::label('deadline_date', __('Change deadline'), ['class' => 'control-label']) !!}
-                    {!! Form::date('deadline_date', \Carbon\Carbon::now()->addDays(7), ['class' => 'form-control']) !!}
-                    {!! Form::text('deadline_time', '15:00', ['class' => 'form-control', 'onkeydown' => 'return isNumberKey(this)', 'onchange' => 'validateHhMm(this)', 'id' => 'deadline_time']) !!}
-
-
-
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-default col-lg-6"
-                                data-dismiss="modal">{{ __('Close') }}</button>
-                        <div class="col-lg-6">
-                            {!! Form::submit( __('Update deadline'), ['class' => 'btn btn-success form-control closebtn']) !!}
-                        </div>
-                        {!! Form::close() !!}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-@endif
-<div class="modal fade" id="add-files-modal" tabindex="-1" role="dialog" aria-hidden="true"
-         style="display:none;">
-    <div class="modal-dialog">
-        <div class="modal-content"></div>
-    </div>
-</div>
 @endsection
 
 @push('scripts')
-<script>
-$( ".sortable" ).sortable({
-    axis: 'X',
-    connectWith: '.sortable',
-    receive: function (event, ui,) {
-        var taskExternalId = ui.item.attr('data-task-id');
-        var statusExternalId =  $(this).attr('data-status-external-id')
-        var url = '{{ route("task.update.status", ":taskExternalId") }}';
-        url = url.replace(':taskExternalId', taskExternalId);
-    // POST to server using $.post or $.ajax
-    $.ajax({
-        data: {
-            "_token": "{{ csrf_token() }}",
-            "statusExternalId": statusExternalId,
-            "test": $(this).parent().attr('id')
-        },
-        type: 'PATCH',
-        url: url
-    });
-}
-});
-    @if(Entrust::can('project-upload-files') && $filesystem_integration)
-    $('#add-files').on('click', function () {
-        $('#add-files-modal .modal-content').load('/add-documents/{{$project->external_id}}' + '/project');
-        $('#add-files-modal').modal('show');
-    });
-    @endif
-</script>
 
+    <script>
+        $("body").on("click", ".project-menu .ajax-tab", function(event) {
+            event.preventDefault();
+
+            $('.project-menu .p-sub-menu').removeClass('active');
+            $(this).addClass('active');
+
+
+            const requestUrl = this.href;
+
+            $.easyAjax({
+                url: requestUrl,
+                blockUI: true,
+                container: ".content-wrapper",
+                historyPush: true,
+                success: function(response) {
+                    if (response.status == "success") {
+                        $('.content-wrapper').html(response.html);
+                        init('.content-wrapper');
+                    }
+                }
+            });
+        });
+
+    </script>
+    <script>
+        const activeTab = "{{ $activeTab }}";
+        $('.project-menu .' + activeTab).addClass('active');
+
+    </script>
+    <script>
+        /*******************************************************
+                 More btn in projects menu Start
+        *******************************************************/
+
+        const container = document.querySelector('.tabs');
+        const primary = container.querySelector('.-primary');
+        const primaryItems = container.querySelectorAll('.-primary > li:not(.-more)');
+        container.classList.add('--jsfied'); // insert "more" button and duplicate the list
+
+        primary.insertAdjacentHTML('beforeend', `
+        <li class="-more">
+            <button type="button" class="px-4 h-100 bg-grey d-none d-lg-flex align-items-center" aria-haspopup="true" aria-expanded="false">
+            {{__('app.more')}} <span>&darr;</span>
+            </button>
+            <ul class="-secondary" id="hide-project-menues">
+            ${primary.innerHTML}
+            </ul>
+        </li>
+        `);
+        const secondary = container.querySelector('.-secondary');
+        const secondaryItems = secondary.querySelectorAll('li');
+        const allItems = container.querySelectorAll('li');
+        const moreLi = primary.querySelector('.-more');
+        const moreBtn = moreLi.querySelector('button');
+        moreBtn.addEventListener('click', e => {
+            e.preventDefault();
+            container.classList.toggle('--show-secondary');
+            moreBtn.setAttribute('aria-expanded', container.classList.contains('--show-secondary'));
+        }); // adapt tabs
+
+        const doAdapt = () => {
+            // reveal all items for the calculation
+            allItems.forEach(item => {
+                item.classList.remove('--hidden');
+            }); // hide items that won't fit in the Primary
+
+            let stopWidth = moreBtn.offsetWidth;
+            let hiddenItems = [];
+            const primaryWidth = primary.offsetWidth;
+            primaryItems.forEach((item, i) => {
+                if (primaryWidth >= stopWidth + item.offsetWidth) {
+                    stopWidth += item.offsetWidth;
+                } else {
+                    item.classList.add('--hidden');
+                    hiddenItems.push(i);
+                }
+            }); // toggle the visibility of More button and items in Secondary
+
+            if (!hiddenItems.length) {
+                moreLi.classList.add('--hidden');
+                container.classList.remove('--show-secondary');
+                moreBtn.setAttribute('aria-expanded', false);
+            } else {
+                secondaryItems.forEach((item, i) => {
+                    if (!hiddenItems.includes(i)) {
+                        item.classList.add('--hidden');
+                    }
+                });
+            }
+        };
+
+        doAdapt(); // adapt immediately on load
+
+        window.addEventListener('resize', doAdapt); // adapt on window resize
+        // hide Secondary on the outside click
+
+        document.addEventListener('click', e => {
+            let el = e.target;
+
+            while (el) {
+                if (el === secondary || el === moreBtn) {
+                    return;
+                }
+
+                el = el.parentNode;
+            }
+
+            container.classList.remove('--show-secondary');
+            moreBtn.setAttribute('aria-expanded', false);
+        });
+        /*******************************************************
+                 More btn in projects menu End
+        *******************************************************/
+    </script>
 @endpush

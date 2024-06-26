@@ -1,24 +1,59 @@
 <?php
+
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Trebol\Entrust\EntrustPermission;
 
 /**
- * @property string display_name
- * @property string name
- * @property string description
- * @property string grouping
+ * App\Models\Permission
+ *
+ * @property int $id
+ * @property string $name
+ * @property string|null $display_name
+ * @property string|null $description
+ * @property int $module_id
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property int $is_custom
+ * @property-read \App\Models\Module $module
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Role[] $roles
+ * @property-read int|null $roles_count
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission whereDisplayName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission whereIsCustom($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission whereModuleId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission whereUpdatedAt($value)
+ * @property string|null $allowed_permissions
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission whereAllowedPermissions($value)
+ * @mixin \Eloquent
  */
-class Permission extends Model
+class Permission extends EntrustPermission
 {
-    protected $fillable = [
-      'display_name',
-      'name',
-      'description',
-      'grouping'
-    ];
-    public function roles()
+
+    const ALL_NONE = '{"all":4, "none":5}';
+
+    const ALL_ADDED_NONE = '{"all":4, "added":1, "none":5}';
+
+    const ALL_4_ADDED_1_NONE_5 = '{"all":4,"added":1, "none":5}';
+
+    const ALL_4_OWNED_2_NONE_5 = '{"all":4, "owned":2, "none":5}';
+
+    const ALL_4_ADDED_1_OWNED_2_NONE_5 = '{"all":4, "added":1, "owned":2, "none":5}';
+
+    const ALL_4_ADDED_1_OWNED_2_BOTH_3_NONE_5 = '{"all":4, "added":1, "owned":2,"both":3, "none":5}';
+
+    protected $fillable = ['name', 'display_name', 'description', 'module_id', 'is_custom', 'allowed_permissions'];
+
+    public function module(): BelongsTo
     {
-        return $this->belongsToMany(Role::class, 'permission_role', 'permission_id', 'role_id');
+        return $this->belongsTo(Module::class, 'module_id');
     }
+
 }

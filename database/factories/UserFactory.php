@@ -1,24 +1,39 @@
 <?php
 
-/** @var \Illuminate\Database\Eloquent\Factory $factory */
+namespace Database\Factories;
 
 use App\Models\User;
-use Faker\Generator as Faker;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
-$factory->define(User::class, function (Faker $faker) {
-    return [
-        'name' => $faker->name,
-        'external_id' => $faker->uuid,
-        'email' => $faker->email,
-        'password' => bcrypt('secretpassword'),
-        'address' => $faker->secondaryAddress(),
-        'primary_number' => $faker->randomNumber(8),
-        'secondary_number' => $faker->randomNumber(8),
-        'remember_token' => null,
-        'language' => 'en',
-    ];
-});
+class UserFactory extends Factory
+{
 
-$factory->afterCreating(User::class, function ($user, $faker) {
-    $user->department()->attach(\App\Models\Department::first()->id);
-});
+    /**
+     * The name of the factory's corresponding model.
+     *
+     * @var string
+     */
+    protected $model = User::class;
+
+    /**
+     * Define the model's default state.
+     *
+     * @return array
+     */
+    public function definition()
+    {
+        $email = fake()->unique()->safeEmail;
+        $email_parts = explode('@', $email);
+        $random_letter = chr(mt_rand(97, 122)) . rand(0, 100);
+
+        $new_email = $email_parts[0] . $random_letter.'@' . $email_parts[1];
+
+        return [
+            'name' => fake()->name,
+            'gender' => 'male',
+            'email' => $new_email, /* @phpstan-ignore-line */
+        ];
+    }
+
+}

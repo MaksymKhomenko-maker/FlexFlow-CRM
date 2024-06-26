@@ -2,80 +2,59 @@
 
 namespace App\Observers;
 
+use App\Events\LeadEvent;
 use App\Models\Lead;
+use App\Models\Notification;
+use App\Models\UniversalSearch;
 
 class LeadObserver
 {
-    private $relations;
 
-    public function __construct()
+    public function saving(Lead $lead)
     {
-        $this->relations = [
-            'comments',
-            'activity',
-            'appointments'
-        ];
+        if (!isRunningInConsoleOrSeeding()) {
+            $userID = (!is_null(user())) ? user()->id : null;
+            $lead->last_updated_by = $userID;
+        }
+
     }
 
-
-    /**
-     * Handle the lead "created" event.
-     *
-     * @param  \App\Models\Lead  $lead
-     * @return void
-     */
-    public function created(Lead $lead)
+    public function creating(Lead $leadContact)
     {
-        //
-    }
+        $leadContact->hash = md5(microtime());
 
-    /**
-     * Handle the lead "updated" event.
-     *
-     * @param  \App\Models\Lead  $lead
-     * @return void
-     */
-    public function updated(Lead $lead)
-    {
-        //
-    }
+        if (!isRunningInConsoleOrSeeding()) {
+            if (request()->has('added_by')) {
+                $leadContact->added_by = request('added_by');
 
-    /**
-     * Handle the lead "deleted" event.
-     *
-     * @param  \App\Models\Lead  $lead
-     * @return void
-     */
-    public function deleted(Lead $lead)
-    {
-        foreach ($this->relations as $relation) {
-            $lead->$relation()->delete();
+            }
+            else {
+                $userID = (!is_null(user())) ? user()->id : null;
+                $leadContact->added_by = $userID;
+            }
+        }
+
+        if (company()) {
+            $leadContact->company_id = company()->id;
         }
     }
 
-    /**
-     * Handle the lead "restored" event.
-     *
-     * @param  \App\Models\Lead  $lead
-     * @return void
-     */
-    public function restored(Lead $lead)
+    public function created(Lead $leadContact)
     {
-        foreach ($this->relations as $relation) {
-            $lead->$relation()->withTrashed()->restore();
+        if (!isRunningInConsoleOrSeeding()) {
+            event(new LeadEvent($leadContact, 'NewLeadCreated'));
         }
     }
 
-    /**
-     * Handle the lead "force deleted" event.
-     *
-     * @param  \App\Models\Lead  $lead
-     * @return void
-     */
-    public function forceDeleted(Lead $lead)
+    public function deleting(Lead $leadContact)
     {
-        foreach ($this->relations as $relation) {
-            $lead->$relation()->withTrashed()->forceDelete();
-        }
+        $notifyData = ['App\Notifications\LeadAgentAssigned', 'App\Notifications\NewDealCreated'];
+        Notification::deleteNotification($notifyData, $leadContact->id);
     }
+
+    public function deleted(Lead $leadContact)
+    {
+        UniversalSearch::where('searchable_id', $leadContact->id)->where('module_type', 'lead')->delete();
+    }
+
 }

@@ -1,41 +1,41 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@lang('installer::installer.title')</title>
+    <title>{{ trans('installer_messages.title') }}</title>
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}" sizes="16x16"/>
 
-    <!-- Bootstrap -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    <link href="{{ asset('installer/css/style.min.css') }}" rel="stylesheet"/>
+    @yield('style')
 
-    <!-- Main Style -->
-    <link href="{{ route('installer::assets.css') }}" rel="stylesheet">
 
-    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    <![endif]-->
-	
 </head>
 <body>
-
-	<div class="container">
-		<div class="login-body">
-			<article class="container-login center-block">
-				<section>
-					@yield('container')
-				</section>
-			</article>
-		</div>
-	</div>
-
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-	<script src="{{ route('installer::assets.js') }}"></script>
-
+<div class="master">
+    <div class="box">
+        <div class="header">
+           <img src="{{ asset('img/worksuite-logo.png') }}" height="40px" alt="">
+            <h1 class="header__title">@yield('title')</h1>
+        </div>
+        <ul class="step">
+            <li class="step__divider"></li>
+            <li class="step__item {{ isActive('LaravelInstaller::final') }}"><i class="step__icon fa fa-check"></i></li>
+            <li class="step__divider"></li>
+            <li class="step__item {{ isActive('LaravelInstaller::permissions') }}"><i class="step__icon fa fa-key"></i></li>
+            <li class="step__divider"></li>
+            <li class="step__item {{ isActive('LaravelInstaller::requirements') }}"><i class="step__icon fa fa-gear"></i></li>
+            <li class="step__divider"></li>
+            <li class="step__item {{ isActive('LaravelInstaller::environment') }}"><i class="step__icon fa fa-database"></i></li>
+            <li class="step__divider"></li>
+            <li class="step__item {{ isActive('LaravelInstaller::welcome') }}"><i class="step__icon fa fa-home"></i></li>
+            <li class="step__divider"></li>
+        </ul>
+        <div class="main">
+            @yield('container')
+        </div>
+    </div>
+</div>
 </body>
+@yield('scripts')
 </html>

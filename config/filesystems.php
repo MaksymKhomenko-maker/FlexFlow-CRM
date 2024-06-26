@@ -1,5 +1,7 @@
 <?php
 
+use App\Helper\Files;
+
 return [
 
     /*
@@ -8,14 +10,12 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here you may specify the default filesystem disk that should be used
-    | by the framework. A "local" driver, as well as a variety of cloud
-    | based drivers are available for your choosing. Just store away!
-    |
-    | Supported: "local", "ftp", "s3", "rackspace"
+    | by the framework. The "local" disk, as well as a variety of cloud
+    | based disks are available to your application. Just store away!
     |
     */
 
-    'default' => 's3',
+    'default' => env('FILESYSTEM_DRIVER', 'local'),
 
     /*
     |--------------------------------------------------------------------------
@@ -28,7 +28,7 @@ return [
     |
     */
 
-    'cloud' => 's3',
+    'cloud' => env('FILESYSTEM_CLOUD', 's3'),
 
     /*
     |--------------------------------------------------------------------------
@@ -39,66 +39,98 @@ return [
     | may even configure multiple disks of the same driver. Defaults have
     | been setup for each driver as an example of the required options.
     |
+    | Supported Drivers: "local", "ftp", "sftp", "s3"
+    |
     */
 
     'disks' => [
+        'customFtp' => [
+            'driver' => 'ftp',
+            'host' => env('FTP_HOST'),
+            'username' => env('FTP_USERNAME'),
+            'password' => env('FTP_PASSWORD'),
+        ],
 
         'local' => [
             'driver' => 'local',
-            'root'   => storage_path('app'),
+            'root' => public_path(Files::UPLOAD_FOLDER),
         ],
 
         'public' => [
-            'driver'     => 'local',
-            'root'       => storage_path('app/public'),
-            'url'        => env('APP_URL') . '/storage',
+            'driver' => 'local',
+            'root' => storage_path('app/public'),
+            'url' => env('APP_URL') . '/storage',
             'visibility' => 'public',
-        ],
-
-        'ftp' => [
-            'driver'   => 'ftp',
-            'host'     => 'ftp.example.com',
-            'username' => 'your-username',
-            'password' => 'your-password',
-
-            // Optional FTP Settings...
-            // 'port'     => 21,
-            // 'root'     => '',
-            // 'passive'  => true,
-            // 'ssl'      => true,
-            // 'timeout'  => 30,
         ],
 
         's3' => [
             'driver' => 's3',
-            'key'    => null,
-            'secret' => null,
-            'region' => 'eu-west-1',
-            'bucket' => env('S3_STORAGE_PATH', null),
-            'cache' => [
-                'store' => 'redis',
-                'expire' => 600,
-                'prefix' => 'daybyday-storage',
-            ],
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL'),
+            'endpoint' => env('AWS_ENDPOINT'),
+        ],
+        'aws_s3' => [
+            'driver' => 's3',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL'),
+            'endpoint' => env('AWS_ENDPOINT'),
+        ],
+        'digitalocean' => [
+            'driver' => 's3',
+            'key' => env('DIGITALOCEAN_SPACES_KEY'),
+            'secret' => env('DIGITALOCEAN_SPACES_SECRET'),
+            'endpoint' => env('DIGITALOCEAN_SPACES_ENDPOINT'),
+            'region' => env('DIGITALOCEAN_SPACES_REGION'),
+            'bucket' => env('DIGITALOCEAN_SPACES_BUCKET')
+        ],
+        'wasabi' => [
+            'driver' => 's3',
+            'key' => env('WASABI_ACCESS_KEY_ID'),
+            'secret' => env('WASABI_SECRET_ACCESS_KEY'),
+            'region' => env('WASABI_DEFAULT_REGION', 'eu-central-1'),
+            'bucket' => env('WASABI_BUCKET'),
+            'endpoint' => env('WASABI_ENDPOINT', 'https://s3.wasabisys.com'),
+        ],
+        'minio' => [
+            'driver' => 's3',
+            'use_path_style_endpoint' => true,
+            'key' => env('MINIO_ACCESS_KEY_ID'),
+            'secret' => env('MINIO_SECRET_ACCESS_KEY'),
+            'region' => env('MINIO_DEFAULT_REGION', 'us-east-1'),
+            'bucket' => env('MINIO_BUCKET'),
+            'endpoint' => env('MINIO_ENDPOINT', ''),
+        ],
+        'storage' => [
+            'driver' => 'local',
+            'root' => storage_path('app'),
         ],
 
-        'rackspace' => [
-            'driver'    => 'rackspace',
-            'username'  => 'your-username',
-            'key'       => 'your-key',
-            'container' => 'your-container',
-            'endpoint'  => 'https://identity.api.rackspacecloud.com/v2.0/',
-            'region'    => 'IAD',
-            'url_type'  => 'publicURL',
+        'localBackup' => [
+            'driver' => 'local',
+            'root' => storage_path(''),
         ],
-        'dropbox' => [
-            'driver' => 'dropbox'
-        ],
-        'google' => [
-            'driver' => 'google',
-            'folderId' => env('GOOGLE_DRIVE_FOLDER_ID', null),
-        ]
 
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Symbolic Links
+    |--------------------------------------------------------------------------
+    |
+    | Here you may configure the symbolic links that will be created when the
+    | `storage:link` Artisan command is executed. The array keys should be
+    | the locations of the links and the values should be their targets.
+    |
+    */
+
+    'links' => [
+        public_path('storage') => storage_path('app/public'),
     ],
 
 ];
